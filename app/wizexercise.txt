@@ -1,0 +1,1 @@
+Confirm the built container image includes a file named "wizexercise.txt" with content.

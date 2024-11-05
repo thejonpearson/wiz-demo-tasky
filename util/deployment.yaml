@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tasky
+#### next two sections are for giving the pod admin access
+---
+# Create Service Account for pods to use
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tasky-service-account
+  namespace: tasky
+---
+# Give the Service Account the Cluster-admin role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tasky-as-admin
+subjects:
+- kind: ServiceAccount
+  name: tasky-service-account
+  apiGroup: ""
+  namespace: tasky
+roleRef:
+  kind: ClusterRole
+  name: Cluster-admin
+  apiGroup: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tasky
+  namespace: tasky
+  labels:
+    app: tasky
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tasky
+  template:
+    metadata:
+      labels:
+        app: tasky
+    spec:
+      serviceAccountName: tasky-service-account
+      containers:
+      - name: tasky
+        image: 124355662581.dkr.ecr.us-west-2.amazonaws.com/tasky/tasky:latest # previously uploaded, built from source
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        env:
+        - name: MONGODB_URI
+          value: mongodb://USERNAMEHERE:PWHERE@mongo.wizdemo.io/go-mongodb # from output of terraform apply
+        - name: SECRET_KEY
+          value: secret123 #this is a default value
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tasky
+  namespace: tasky
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: NodePort
+  selector:
+    app: tasky
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tasky
+  namespace: tasky
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tasky
+                port:
+                  number: 80
