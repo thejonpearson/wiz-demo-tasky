@@ -8,6 +8,10 @@ body{
 	font-family: 'Jost', sans-serif;
 	background: #5b9fbe
 }
+a {
+	justify-content: center;
+	display: flex;
+}
 /*singup*/
 .main{
 	width: 350px;
