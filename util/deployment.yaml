@@ -57,9 +57,11 @@ spec:
           requests:
             memory: "256Mi"
             cpu: "250m"
+        # in production we'd want to pull these from external secret service
+        # probably like: https://external-secrets.io/v0.5.0/provider-aws-parameter-store/
         env:
         - name: MONGODB_URI
-          value: mongodb://USERNAMEHERE:PWHERE@mongo.wizdemo.io/go-mongodb # from output of terraform apply
+          value: mongodb://USERNAMEHERE:PWHERE@mongo.wizdemo.io/go-mongodb
         - name: SECRET_KEY
           value: secret123 #this is a default value
 ---
